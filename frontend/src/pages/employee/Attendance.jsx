@@ -9,6 +9,7 @@ const Attendance = () => {
   const [shutter, setShutter] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  // Environment Variables for Cloudinary
   const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -19,11 +20,13 @@ const Attendance = () => {
   };
 
   const captureAndSend = useCallback(async (type) => {
+    // 1. Visual Feedback
     setShutter(true);
     setTimeout(() => setShutter(false), 150);
     setLoading(true);
     setMessage({ type: "", text: "" });
 
+    // 2. Capture Image
     const imageSrc = webcamRef.current?.getScreenshot();
     if (!imageSrc) {
       setMessage({ type: "error", text: "Camera capture failed." });
@@ -32,6 +35,7 @@ const Attendance = () => {
     }
 
     try {
+      // 3. Upload to Cloudinary (Keeps your DB light)
       const formData = new FormData();
       formData.append("file", imageSrc);
       formData.append("upload_preset", UPLOAD_PRESET);
@@ -44,6 +48,7 @@ const Attendance = () => {
       const imageUrl = cloudinaryRes.data.secure_url;
       const endpoint = type === "START" ? "/attendance/start" : "/attendance/end";
       
+      // 4. Send URL to your Backend
       await api.post(endpoint, {
         image: imageUrl,
         timestamp: new Date().toISOString(),
@@ -51,18 +56,30 @@ const Attendance = () => {
 
       setMessage({ 
         type: "success", 
-        text: `${type === 'START' ? 'Check-in' : 'Check-out'} recorded!` 
+        text: `${type === 'START' ? 'Check-in' : 'Check-out'} recorded successfully!` 
       });
     } catch (err) {
-      setMessage({ type: "error", text: "Connection failed." });
+      setMessage({ 
+        type: "error", 
+        text: err.response?.data?.message || "Connection failed. Please try again." 
+      });
     } finally {
       setLoading(false);
     }
   }, [webcamRef, CLOUD_NAME, UPLOAD_PRESET]);
 
+  // UI Component: Loading Dots
+  const DotsSpinner = () => (
+    <div className="flex items-center justify-center space-x-1">
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#f8f9fa] p-4 flex flex-col items-center justify-center font-sans">
-      <div className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-3xl">
+      <div className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-2xl">
         
         {/* Header Section */}
         <div className="text-center mb-6">
@@ -74,6 +91,7 @@ const Attendance = () => {
           </p>
         </div>
 
+        {/* Camera Display */}
         <div className="relative rounded-xl overflow-hidden mb-6 bg-black aspect-video border border-gray-100 shadow-sm">
           <Webcam
             audio={false}
@@ -82,58 +100,57 @@ const Attendance = () => {
             videoConstraints={videoConstraints}
             className="w-full h-full object-cover"
           />
-          <div className={`absolute inset-0 bg-white transition-opacity duration-150 ${shutter ? "opacity-100" : "opacity-0 pointer-events-none"}`}></div>
+          <div className={`absolute inset-0 bg-white transition-opacity duration-150 z-10 ${shutter ? "opacity-100" : "opacity-0 pointer-events-none"}`}></div>
         </div>
 
+        {/* Status Messages */}
         {message.text && (
-          <div className={`p-2 rounded text-xs mb-4 text-center ${message.type === "success" ? "text-green-600" : "text-red-600"}`}>
+          <div className={`p-3 rounded-lg mb-4 text-sm text-center font-medium border ${
+            message.type === "success" ? "bg-green-50 text-green-600 border-green-100" : "bg-red-50 text-red-600 border-red-100"
+          }`}>
             {message.text}
           </div>
         )}
 
-        <div className="flex flex-row gap-3 mb-10">
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
           <button
             onClick={() => captureAndSend("START")}
             disabled={loading}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all active:scale-95 disabled:opacity-50 min-h-[52px] flex items-center justify-center"
           >
-            {loading ? "..." : "Start Attendance"}
+            {loading ? <DotsSpinner /> : "Start Attendance"}
           </button>
 
           <button
             onClick={() => captureAndSend("END")}
             disabled={loading}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all active:scale-95 disabled:opacity-50 min-h-[52px] flex items-center justify-center"
           >
-            {loading ? "..." : "End Attendance"}
+            {loading ? <DotsSpinner /> : "End Attendance"}
           </button>
         </div>
 
-        <div className="space-y-3 px-2 mt-6 border-t border-gray-50 pt-4">
-          <div className="flex justify-between items-center text-[13px]">
-            <div className="flex items-center text-[#666]">
-              <div className="w-4 h-4 rounded-full bg-green-600 flex items-center justify-center mr-2">
-                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
-                </svg>
+        {/* Policy Info Section */}
+        <div className="space-y-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-between items-center text-xs">
+            <div className="flex items-center text-gray-600">
+              <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mr-2">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
               </div>
-              <span className="text-[#777]">Daily Credit: <span className="text-[#aaa] ml-1">Valid Day:</span></span>
+              <span>Daily Credit (Valid Day)</span>
             </div>
-            <span className="text-[#888] font-medium tracking-tight text-right">
-              &ge; 8 Hours
-            </span>
+            <span className="font-bold text-gray-700">≥ 8 Hours</span>
           </div>
 
-          <div className="flex justify-between items-center text-[13px]">
-            <div className="flex items-center text-[#666]">
-              <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center mr-2">
-                <span className="text-white text-[10px] font-bold">i</span>
+          <div className="flex justify-between items-center text-xs">
+            <div className="flex items-center text-gray-600">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
               </div>
-              <span className="text-[#777]">Monthly Balance Target</span>
+              <span>Monthly Balance Target</span>
             </div>
-            <span className="text-[#888] font-medium tracking-tight text-right">
-              9 Hours Avg.
-            </span>
+            <span className="font-bold text-gray-700">9 Hours Avg.</span>
           </div>
         </div>
       </div>
