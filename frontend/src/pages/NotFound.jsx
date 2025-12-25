@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-// IMPORT the image from your assets folder
+
 import notFoundImg from '../assets/NotFound.jpg'; 
 
 const NotFound = () => {
@@ -9,19 +9,17 @@ const NotFound = () => {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-6 md:p-12 font-sans overflow-hidden">
       <div className="max-w-6xl w-full flex flex-col md:flex-row items-center justify-between gap-12">
-        
-        {/* Left Side: Character Image Container */}
+
         <div className="w-full md:w-1/2 flex justify-center items-center relative">
           <div className="absolute w-64 h-64 bg-blue-50 rounded-full filter blur-3xl opacity-50"></div>
           
           <img 
-            src={notFoundImg} // USE the imported variable here
+            src={notFoundImg} 
             alt="Mike Wazowski" 
             className="relative w-72  h-auto object-contain transform -rotate-3 transition-transform duration-500 hover:rotate-0"
           />
         </div>
 
-        {/* Right Side: Text & Actions */}
         <div className="w-full md:w-1/2 text-center md:text-left space-y-6">
           <div className="space-y-2">
             <h1 className="text-6xl md:text-8xl font-black text-gray-900 leading-none tracking-tighter uppercase">
