@@ -4,7 +4,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import Attendance from "./pages/employee/Attendance";
 import NotFound from "./pages/NotFound";
-
+import Dashboard from "./pages/employee/Dashboard";
 function App() {
   return (
     <Routes>
@@ -14,6 +14,7 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/employee/attendance" element={<Attendance />} />
       <Route path="*" element={<NotFound />} />
+      <Route path="/employee/dashboard" element={<Dashboard />} />
     </Routes>
   );
 }
