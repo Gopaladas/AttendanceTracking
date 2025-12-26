@@ -153,6 +153,7 @@
 
 import React from 'react';
 import { Clock, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import api from '../../services/api';
 
 const EmployeeDashboard = () => {
   // These would eventually come from your Backend API
