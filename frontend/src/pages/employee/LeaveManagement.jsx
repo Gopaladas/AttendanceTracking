@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+<<<<<<< HEAD
 import api from "../../services/api";
 import LeaveStatus from "./LeaveStatus"; // Keep this separate as it's a large component
 
@@ -26,10 +27,18 @@ const LeaveManagement = () => {
       setLoading(false);
     }
   };
+=======
+import LeaveApplication from "./LeaveApplication";
+import LeaveStatus from "./LeaveStatus";
+
+const LeaveManagement = () => {
+  const [activeTab, setActiveTab] = useState("apply");
+>>>>>>> 2aae2ab426209b57fd4ce410be167c9a6dec1979
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
+<<<<<<< HEAD
         <header className="mb-8">
           <h1 className="text-3xl font-black text-gray-800 tracking-tight">Leave Management</h1>
           <p className="text-gray-500 text-sm">Request time off and track approval status.</p>
@@ -49,12 +58,38 @@ const LeaveManagement = () => {
             onClick={() => setActiveTab("status")}
             className={`px-8 py-2.5 text-sm font-bold rounded-xl transition-all ${
               activeTab === "status" ? "bg-white text-indigo-600 shadow-md" : "text-gray-600 hover:text-gray-900"
+=======
+        <div className="mb-8">
+          <h1 className="text-3xl font-black text-gray-800">Leave Management</h1>
+          <p className="text-gray-500 text-sm">Request time off and track your application status.</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex space-x-1 bg-gray-200 p-1 rounded-xl mb-8 w-fit">
+          <button
+            onClick={() => setActiveTab("apply")}
+            className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${
+              activeTab === "apply" 
+              ? "bg-white text-indigo-600 shadow-sm" 
+              : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Apply for Leave
+          </button>
+          <button
+            onClick={() => setActiveTab("status")}
+            className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${
+              activeTab === "status" 
+              ? "bg-white text-indigo-600 shadow-sm" 
+              : "text-gray-600 hover:text-gray-800"
+>>>>>>> 2aae2ab426209b57fd4ce410be167c9a6dec1979
             }`}
           >
             My History
           </button>
         </div>
 
+<<<<<<< HEAD
         {/* Conditional UI Rendering */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-10">
           {activeTab === "apply" ? (
@@ -98,6 +133,18 @@ const LeaveManagement = () => {
             </div>
           ) : (
             <LeaveStatus />
+=======
+        {/* Conditional Content */}
+        <div className="transition-all duration-300">
+          {activeTab === "apply" ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
+               <LeaveApplication />
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+               <LeaveStatus />
+            </div>
+>>>>>>> 2aae2ab426209b57fd4ce410be167c9a6dec1979
           )}
         </div>
       </div>
