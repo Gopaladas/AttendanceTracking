@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import api from "../../services/api";
 
@@ -7,6 +7,7 @@ const Attendance = () => {
   const [loading, setLoading] = useState(false);
   const [shutter, setShutter] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [currentStatus, setCurrentStatus] = useState("OUT");
 
   // Camera Settings
   const videoConstraints = {
@@ -15,43 +16,80 @@ const Attendance = () => {
     facingMode: "user",
   };
 
+  // Function to sync status from backend to show correct buttons
+  const fetchCurrentStatus = async () => {
+    try {
+      const res = await api.get("/attendance/current-status");
+      setCurrentStatus(res.data.status);
+    } catch (err) {
+      console.error("Status sync failed");
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentStatus();
+  }, []);
+
   const captureAndSend = useCallback(async (type) => {
-    // 1. Trigger Shutter Visual Effect
+    // Shutter animation effect
     setShutter(true);
     setTimeout(() => setShutter(false), 150);
     setLoading(true);
     setMessage({ type: "", text: "" });
 
-    // 1. Capture base64 image from webcam
     const imageSrc = webcamRef.current?.getScreenshot();
     if (!imageSrc) {
       setMessage({
         type: "error",
-        text: "Failed to capture photo. Please try again.",
+        text: "Camera capture failed. Please try again.",
       });
       setLoading(false);
       return;
     }
 
-    // 3. Send to Backend
     try {
+      // 2. Upload to Cloudinary
+      const formData = new FormData();
+      formData.append("file", imageSrc);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      const cloudinaryRes = await axios.post(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        formData
+      );
+
+      const imageUrl = cloudinaryRes.data.secure_url;
+      console.log("Cloudinary Upload Success:", imageUrl);
+
+      // 3. Send URL and Type to Backend
       const endpoint = type === "START" ? "/attendance/start" : "/attendance/end";
       await api.post(endpoint, {
-        image: imageSrc,
+        image: imageUrl, // Now sending the web link
         timestamp: new Date().toISOString(),
       });
-      setMessage({ type: "success", text: `${type} Recorded Successfully!` });
+
+      setMessage({ 
+        type: "success", 
+        text: `${type === 'START' ? 'Check-in' : 'Check-out'} Recorded Successfully!` 
+      });
+
     } catch (err) {
+      console.error("Processing Error:", err);
+      // Detailed error message handling
+      const errorText = err.response?.data?.error?.message || 
+                        err.response?.data?.message || 
+                        "Connection failed. Check your internet.";
+      
       setMessage({
         type: "error",
-        text: err.response?.data?.message || "Server Connection Error.",
+        text: errorText,
       });
     } finally {
       setLoading(false);
     }
   }, [webcamRef, CLOUD_NAME, UPLOAD_PRESET]);
 
-  // Loading Animation Component
+  // Spinner UI Component
   const DotsSpinner = () => (
     <div className="flex items-center justify-center space-x-1">
       <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
@@ -63,18 +101,17 @@ const Attendance = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl text-center">
-        
-        {/* Header Section */}
+        <StatusTracker />
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
             Photo-Verified Attendance
           </h2>
           <p className="text-xs text-gray-500 mt-1">
-            Smile for the camera to verify your session and start tracking hours.
+            Capture your photo to record your attendance.
           </p>
         </div>
 
-        {/* Camera Display with Shutter Overlay */}
+        {/* Camera Display */}
         <div className="relative rounded-lg overflow-hidden border-4 border-gray-200 mb-6 bg-black aspect-video shadow-inner">
           <Webcam
             audio={false}
@@ -92,21 +129,25 @@ const Attendance = () => {
           ></div>
         </div>
 
-        {/* Alert Messages */}
+        {/* Status Message */}
         {message.text && (
-          <div className={`p-3 rounded-lg mb-4 text-sm text-center font-medium border ${
-            message.type === "success" ? "bg-green-50 text-green-600 border-green-100" : "bg-red-50 text-red-600 border-red-100"
-          }`}>
+          <div
+            className={`p-3 rounded-lg mb-4 font-medium text-sm transition-all ${
+              message.type === "success"
+                ? "bg-green-100 text-green-700 border border-green-200"
+                : "bg-red-100 text-red-700 border border-red-200"
+            }`}
+          >
             {message.text}
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Control Buttons */}
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => captureAndSend("START")}
             disabled={loading}
-            className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg min-h-12 disabled:opacity-70 transition-all active:scale-95"
+            className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg min-h-12 disabled:opacity-70 transition-all active:scale-95 shadow-md"
           >
             {loading ? <DotsSpinner /> : "Start Attendance"}
           </button>
@@ -114,17 +155,15 @@ const Attendance = () => {
           <button
             onClick={() => captureAndSend("END")}
             disabled={loading}
-            className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg min-h-12 disabled:opacity-70 transition-all active:scale-95"
+            className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg min-h-12 disabled:opacity-70 transition-all active:scale-95 shadow-md"
           >
             {loading ? <DotsSpinner /> : "End Attendance"}
           </button>
         </div>
 
-        {/* Module 3: Policy Information Box */}
+        {/* Policy Information Section */}
         <div className="mt-6 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
           <div className="flex flex-col gap-3 text-xs">
-            
-            {/* Daily Credit Rule */}
             <div className="flex items-center justify-between bg-green-50 p-2.5 rounded-lg border border-green-100">
               <div className="flex items-center text-green-700">
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -132,12 +171,9 @@ const Attendance = () => {
                 </svg>
                 <span className="font-medium">Daily Credit (Valid Day)</span>
               </div>
-              <span>Daily Credit (Valid Day)</span>
+              <span className="font-bold text-green-800">≥ 8 Hours</span>
             </div>
-            <span className="font-bold text-gray-700">≥ 8 Hours</span>
-          </div>
 
-            {/* Monthly Balancing Target */}
             <div className="flex items-center justify-between bg-blue-50 p-2.5 rounded-lg border border-blue-100">
               <div className="flex items-center text-blue-700">
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -145,15 +181,17 @@ const Attendance = () => {
                 </svg>
                 <span className="font-medium">Monthly Balance Target</span>
               </div>
-              <span>Monthly Balance Target</span>
+              <span className="font-bold text-blue-800">9 Hours Avg.</span>
             </div>
 
-            {/* Invalid Day Warning */}
             <p className="text-[10px] text-gray-400 text-center italic">
               * Days under 8 hours are marked as{" "}
               <span className="text-red-500 font-semibold uppercase tracking-wider">Invalid</span>.
             </p>
           </div>
+          <p className="text-[10px] text-gray-400 mt-4 italic">
+            Note: Captured photos are stored for administrative verification.
+          </p>
         </div>
       </div>
     </div>

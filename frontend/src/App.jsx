@@ -5,16 +5,42 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Attendance from "./pages/employee/Attendance";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/employee/Dashboard";
+import LeaveManagement from "./pages/employee/LeaveManagement";
+
+// A simple helper to check if user is logged in
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
+  return token ? children : <Navigate to="/login" />;
+};
+
 function App() {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<Navigate to="/login" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/employee/attendance" element={<Attendance />} />
+
+      {/* Employee Routes (Protected) */}
+      <Route 
+        path="/employee/dashboard" 
+        element={<ProtectedRoute><Dashboard /></ProtectedRoute>} 
+      />
+      <Route 
+        path="/employee/attendance" 
+        element={<ProtectedRoute><Attendance /></ProtectedRoute>} 
+      />
+      <Route 
+        path="/employee/leave-management" 
+        element={<ProtectedRoute><LeaveManagement /></ProtectedRoute>} 
+      />
+
+      {/* Admin Routes (To be created next) */}
+      {/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
+
+      {/* 404 Route */}
       <Route path="*" element={<NotFound />} />
-      <Route path="/employee/dashboard" element={<Dashboard />} />
     </Routes>
   );
 }
