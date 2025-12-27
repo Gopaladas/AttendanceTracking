@@ -80,6 +80,11 @@ const Login = () => {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
+            <div className="text-right">
+            <Link to="/Signup" size="sm" className="text-blue-600 hover:underline">
+              Signup/Register
+            </Link>
+          </div>
         </form>
       </div>
     </div>
