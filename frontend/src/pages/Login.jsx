@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import GaintLogo from "../assets/Gaint_logo.png";
 import { Link, useNavigate } from "react-router-dom";
-// import api from "../../services/api";
+import api from "../services/api";
 
 const Login = () => {
   // Define your hooks properly here

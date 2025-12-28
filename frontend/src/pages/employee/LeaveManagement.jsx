@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import api from "../../services/api";
-import LeaveStatus from "./LeaveStatus"; 
+import LeaveStatus from "./LeaveStatus"; // Keep this separate as it's a large component
 
 const LeaveManagement = () => {
   const [activeTab, setActiveTab] = useState("apply");
@@ -19,10 +19,9 @@ const LeaveManagement = () => {
     try {
       await api.post("/leave/apply", formData);
       setMsg("Leave applied successfully!");
-      // Reset form
       setFormData({ leaveType: "Sick", startDate: "", endDate: "", reason: "" });
     } catch (err) {
-      setMsg("Failed to apply for leave. Please try again.");
+      setMsg("Failed to apply for leave.");
     } finally {
       setLoading(false);
     }
@@ -33,7 +32,7 @@ const LeaveManagement = () => {
       <div className="max-w-4xl mx-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-black text-gray-800 tracking-tight">Leave Management</h1>
-          <p className="text-gray-500 text-sm">Request time off and track your application history.</p>
+          <p className="text-gray-500 text-sm">Request time off and track approval status.</p>
         </header>
 
         {/* Tab System UI */}
@@ -41,9 +40,7 @@ const LeaveManagement = () => {
           <button
             onClick={() => setActiveTab("apply")}
             className={`px-8 py-2.5 text-sm font-bold rounded-xl transition-all ${
-              activeTab === "apply" 
-                ? "bg-white text-indigo-600 shadow-md" 
-                : "text-gray-600 hover:text-gray-900"
+              activeTab === "apply" ? "bg-white text-indigo-600 shadow-md" : "text-gray-600 hover:text-gray-900"
             }`}
           >
             New Request
@@ -51,19 +48,17 @@ const LeaveManagement = () => {
           <button
             onClick={() => setActiveTab("status")}
             className={`px-8 py-2.5 text-sm font-bold rounded-xl transition-all ${
-              activeTab === "status" 
-                ? "bg-white text-indigo-600 shadow-md" 
-                : "text-gray-600 hover:text-gray-900"
+              activeTab === "status" ? "bg-white text-indigo-600 shadow-md" : "text-gray-600 hover:text-gray-900"
             }`}
           >
             My History
           </button>
         </div>
 
-        {/* Main Content Area */}
-        <div className="transition-all duration-300">
+        {/* Conditional UI Rendering */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-10">
           {activeTab === "apply" ? (
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-10 max-w-xl mx-auto">
+            <div className="max-w-md mx-auto">
               <h2 className="text-xl font-bold text-gray-800 mb-6">Apply for Leave</h2>
               <form onSubmit={handleApply} className="space-y-5">
                 <div>
@@ -82,56 +77,27 @@ const LeaveManagement = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">From</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none" 
-                      value={formData.startDate}
-                      onChange={(e) => setFormData({...formData, startDate: e.target.value})} 
-                      required 
-                    />
+                    <input type="date" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none" onChange={(e) => setFormData({...formData, startDate: e.target.value})} required />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">To</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none" 
-                      value={formData.endDate}
-                      onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
-                      required 
-                    />
+                    <input type="date" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none" onChange={(e) => setFormData({...formData, endDate: e.target.value})} required />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Reason</label>
-                  <textarea 
-                    rows="3" 
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none resize-none" 
-                    placeholder="Details about your leave request..." 
-                    value={formData.reason}
-                    onChange={(e) => setFormData({...formData, reason: e.target.value})} 
-                    required
-                  ></textarea>
+                  <textarea rows="3" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none resize-none" placeholder="Details about your leave..." onChange={(e) => setFormData({...formData, reason: e.target.value})} required></textarea>
                 </div>
 
-                <button 
-                  disabled={loading} 
-                  className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all disabled:opacity-50"
-                >
+                <button disabled={loading} className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all disabled:opacity-50">
                   {loading ? "Submitting..." : "Send Application"}
                 </button>
-                
-                {msg && (
-                  <p className={`text-center text-sm font-bold mt-2 ${msg.includes("Failed") ? "text-red-500" : "text-indigo-600"}`}>
-                    {msg}
-                  </p>
-                )}
+                {msg && <p className="text-center text-sm font-bold text-indigo-600 animate-pulse">{msg}</p>}
               </form>
             </div>
           ) : (
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-2">
-               <LeaveStatus />
-            </div>
+            <LeaveStatus />
           )}
         </div>
       </div>
