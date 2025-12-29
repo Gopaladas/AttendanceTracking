@@ -7,10 +7,11 @@
 
     const fetchStatus = async () => {
       try {
+        // Calls your backend to get the latest check-in/out record
         const res = await api.get("/attendance/current-status");
         setStatus({
-          state: res.data.status, 
-          lastTime: res.data.lastAction,  
+          state: res.data.status, // Expecting "IN" or "OUT"
+          lastTime: res.data.lastAction, // Expecting a timestamp
         });
       } catch (err) {
         console.error("Status fetch failed");
